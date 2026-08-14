@@ -1,0 +1,794 @@
+﻿@page "/"
+
+
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>KITRAX Zombie Survival</PageTitle>
+
+
+
+<div class="jeu" tabindex="0" @onkeydown="GererTouche">
+
+    <h1>🧟 KITRAX ZOMBIE SURVIVAL</h1>
+
+    <div class="stats">
+
+        <div class="stat">
+            <div>❤️ @vie / @vieMax HP</div>
+
+            <div class="barre">
+                <div class="barre-vie"
+                     style="width:@PourcentageVie%">
+                </div>
+            </div>
+        </div>
+
+        <div class="stat">
+            <div>🧟 @vieZombie / @vieZombieMax HP</div>
+
+            <div class="barre">
+                <div class="barre-zombie"
+                     style="width:@PourcentageZombie%">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="zone-combat">
+
+        @if (vie > 0)
+        {
+            <button class="zombie-cible"
+                    @onclick="Tirer">
+
+                🧟
+
+            </button>
+        }
+        else
+        {
+            <div class="gameover">
+                💀 GAME OVER
+            </div>
+        }
+
+
+        @if (lootPresent)
+        {
+            <button class="loot"
+                    @onclick="RamasserLoot">
+
+                @(typeLoot == "balles"
+                    ? "🔫 MUNITIONS"
+                    : "💊 SOIN")
+
+            </button>
+        }
+
+    </div>
+
+
+    <div class="infos">
+
+        <span>🔫 @munitions / @reserve</span>
+
+        <span>💊 @soins</span>
+
+        <span>🌊 Vague @vague</span>
+
+        <span>🧟 Restants : @zombiesRestants</span>
+
+        <span>🏆 @score</span>
+
+    </div>
+
+
+    <p class="message">
+        @message
+    </p>
+
+
+    <div class="actions">
+
+        <button @onclick="Recharger">
+            🔄 R - Recharger
+        </button>
+
+        <button @onclick="Soigner">
+            💊 S - Soigner
+        </button>
+
+        @if (vie <= 0)
+        {
+            <button class="rejouer"
+                    @onclick="Rejouer">
+
+                🔄 Rejouer
+
+            </button>
+        }
+
+    </div>
+
+</div>
+
+
+
+<style>
+
+    body {
+        background: #0f0f0f;
+    }
+
+
+    .jeu {
+        width: 950px;
+        max-width: 95vw;
+
+        margin: 25px auto;
+        padding: 20px;
+
+        background: #1b1b1b;
+        color: white;
+
+        border-radius: 20px;
+
+        text-align: center;
+
+        outline: none;
+    }
+
+
+    h1 {
+        margin-bottom: 25px;
+    }
+
+
+    .stats {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 40px;
+
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+
+    .barre {
+        height: 30px;
+
+        background: #333;
+
+        border-radius: 15px;
+
+        overflow: hidden;
+
+        margin-top: 8px;
+    }
+
+
+    .barre-vie {
+        height: 100%;
+
+        background: #2ecc71;
+
+        transition: width 0.2s;
+    }
+
+
+    .barre-zombie {
+        height: 100%;
+
+        background: #e74c3c;
+
+        transition: width 0.2s;
+    }
+
+
+    .zone-combat {
+        height: 350px;
+
+        margin-top: 25px;
+
+        position: relative;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        background: #242424;
+
+        border-radius: 15px;
+
+        overflow: hidden;
+    }
+
+
+    .zombie-cible {
+        font-size: 150px;
+
+        background: transparent;
+
+        border: none;
+
+        cursor: crosshair;
+
+        user-select: none;
+
+        transition: transform 0.1s;
+    }
+
+
+    .zombie-cible:hover {
+        transform: scale(1.07);
+    }
+
+
+    .zombie-cible:active {
+        transform: scale(0.95);
+    }
+
+
+    .loot {
+        position: absolute;
+
+        bottom: 25px;
+
+        padding: 15px 25px;
+
+        font-size: 18px;
+        font-weight: bold;
+
+        border: 2px solid white;
+        border-radius: 10px;
+
+        background: #d4a017;
+
+        cursor: pointer;
+    }
+
+
+    .infos {
+        display: flex;
+
+        justify-content:
+            space-around;
+
+        flex-wrap: wrap;
+
+        gap: 15px;
+
+        margin-top: 20px;
+
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+
+    .message {
+        min-height: 45px;
+
+        margin-top: 20px;
+
+        font-size: 18px;
+        font-weight: bold;
+
+        color: #f1c40f;
+    }
+
+
+    .actions {
+        display: flex;
+
+        justify-content: center;
+
+        flex-wrap: wrap;
+
+        gap: 15px;
+    }
+
+
+    .actions button {
+        padding: 12px 22px;
+
+        font-size: 16px;
+        font-weight: bold;
+
+        border: none;
+        border-radius: 10px;
+
+        cursor: pointer;
+
+        background: #444;
+        color: white;
+    }
+
+
+    .actions button:hover {
+        background: #666;
+    }
+
+
+    .rejouer {
+        background: #27ae60 !important;
+    }
+
+
+    .gameover {
+        font-size: 52px;
+
+        font-weight: bold;
+
+        color: #e74c3c;
+    }
+
+
+    @@media (max-width: 650px) {
+
+        .stats {
+            grid-template-columns: 1fr;
+        }
+
+
+        .zone-combat {
+            height: 300px;
+        }
+
+
+        .zombie-cible {
+            font-size: 110px;
+        }
+
+
+        .infos {
+            font-size: 17px;
+        }
+    }
+
+</style>
+
+
+
+@code {
+
+    Random random = new();
+
+
+    int vie = 100;
+    int vieMax = 100;
+
+
+    int vieZombie = 100;
+    int vieZombieMax = 100;
+
+
+    int munitions = 6;
+    int reserve = 18;
+
+    int soins = 3;
+
+
+    int vague = 1;
+    int score = 0;
+
+    int zombiesRestants = 1;
+
+
+    bool lootPresent = false;
+
+    string typeLoot = "";
+
+
+    string message =
+        "🎮 Clique sur le zombie pour tirer. R = Recharger, S = Soin.";
+
+
+
+    double PourcentageVie
+    {
+        get
+        {
+            if (vieMax <= 0)
+                return 0;
+
+            return Math.Clamp(
+                ((double)vie / vieMax) * 100,
+                0,
+                100
+            );
+        }
+    }
+
+
+
+    double PourcentageZombie
+    {
+        get
+        {
+            if (vieZombieMax <= 0)
+                return 0;
+
+            return Math.Clamp(
+                ((double)vieZombie / vieZombieMax) * 100,
+                0,
+                100
+            );
+        }
+    }
+
+
+
+    void Tirer()
+    {
+        if (vie <= 0)
+            return;
+
+
+        if (munitions <= 0)
+{
+    // Plus aucune balle dans tout le jeu
+    if (reserve <= 0)
+    {
+        vie = 0;
+
+        message =
+            $"💀 GAME OVER ! Plus aucune munition ! | Score : {score}";
+
+        return;
+    }
+
+    // Il reste des balles dans la réserve
+    message =
+        $"❌ Chargeur vide ! Il reste {reserve} balles. Appuie sur R.";
+
+    return;
+}
+
+        munitions--;
+if (munitions == 0 && reserve == 0)
+{
+    vie = 0;
+
+    message =
+        $"💀 GAME OVER ! Tu as tiré ta dernière balle ! | Score : {score}";
+
+    return;
+}
+
+        int degats =
+            random.Next(15, 31);
+
+
+        bool critique =
+            random.Next(1, 101) <= 15;
+
+
+        if (critique)
+        {
+            degats *= 2;
+        }
+
+
+        vieZombie -= degats;
+
+
+        if (vieZombie <= 0)
+        {
+            vieZombie = 0;
+
+            ZombieElimine();
+
+            return;
+        }
+
+
+        int attaqueZombie =
+            random.Next(5, 16);
+
+
+        vie -= attaqueZombie;
+
+
+        if (vie <= 0)
+        {
+            vie = 0;
+
+            message =
+                $"💀 GAME OVER | Score : {score}";
+
+            return;
+        }
+
+
+        if (munitions == 0)
+        {
+            message =
+                $"🔫 {degats} dégâts | ❌ Chargeur vide ! Appuie sur R.";
+        }
+        else if (critique)
+        {
+            message =
+                $"💥 CRITIQUE ! {degats} dégâts | 🧟 -{attaqueZombie} HP sur toi";
+        }
+        else
+        {
+            message =
+                $"🔫 {degats} dégâts | 🧟 -{attaqueZombie} HP sur toi";
+        }
+    }
+
+
+
+    void Recharger()
+    {
+        if (vie <= 0)
+            return;
+
+
+        int besoin =
+            6 - munitions;
+
+
+        if (besoin <= 0)
+        {
+            message =
+                "🔫 Chargeur déjà plein.";
+
+            return;
+        }
+
+
+        if (reserve <= 0)
+        {
+            message =
+                "❌ Plus de munitions en réserve.";
+
+            return;
+        }
+
+
+        int recharge =
+            Math.Min(
+                besoin,
+                reserve
+            );
+
+
+        munitions += recharge;
+
+        reserve -= recharge;
+
+
+        message =
+            $"🔄 Rechargement : +{recharge} balles";
+    }
+
+
+
+    void Soigner()
+    {
+        if (vie <= 0)
+            return;
+
+
+        if (soins <= 0)
+        {
+            message =
+                "❌ Plus de soins.";
+
+            return;
+        }
+
+
+        if (vie >= vieMax)
+        {
+            message =
+                "❤️ Tes HP sont déjà au maximum.";
+
+            return;
+        }
+
+
+        soins--;
+
+
+        int ancienVie =
+            vie;
+
+
+        vie =
+            Math.Min(
+                vieMax,
+                vie + 30
+            );
+
+
+        int hpGagnes =
+            vie - ancienVie;
+
+
+        message =
+            $"💊 +{hpGagnes} HP";
+    }
+
+
+
+    void ZombieElimine()
+    {
+        score += 100;
+
+
+        zombiesRestants--;
+
+
+        if (zombiesRestants > 0)
+        {
+            vieZombie =
+                vieZombieMax;
+
+
+            message =
+                $"✅ Zombie éliminé ! Encore {zombiesRestants} zombie(s).";
+
+            return;
+        }
+
+
+        int chance =
+            random.Next(1, 101);
+
+
+        if (chance <= 50)
+        {
+            lootPresent = true;
+
+            typeLoot = "balles";
+        }
+        else if (chance <= 80)
+        {
+            lootPresent = true;
+
+            typeLoot = "soin";
+        }
+        else
+        {
+            lootPresent = false;
+
+            typeLoot = "";
+        }
+
+
+        vague++;
+
+
+        zombiesRestants =
+            vague;
+
+
+        vieZombieMax =
+            100 +
+            ((vague - 1) * 20);
+
+
+        vieZombie =
+            vieZombieMax;
+
+
+        if (lootPresent)
+        {
+            message =
+                $"🎁 Loot trouvé ! Vague {vague}";
+        }
+        else
+        {
+            message =
+                $"🌊 Vague {vague} !";
+        }
+    }
+
+
+
+    void RamasserLoot()
+    {
+        if (!lootPresent)
+            return;
+
+
+        if (typeLoot == "balles")
+        {
+            int balles =
+                random.Next(4, 11);
+
+
+            reserve += balles;
+
+
+            message =
+                $"🔫 +{balles} munitions !";
+        }
+        else if (typeLoot == "soin")
+        {
+            soins++;
+
+
+            message =
+                "💊 +1 soin !";
+        }
+
+
+        lootPresent = false;
+
+        typeLoot = "";
+    }
+
+
+
+    void Rejouer()
+    {
+        vie = 100;
+
+        vieMax = 100;
+
+
+        vieZombieMax = 100;
+
+        vieZombie = 100;
+
+
+        munitions = 6;
+
+        reserve = 18;
+
+        soins = 3;
+
+
+        vague = 1;
+
+        score = 0;
+
+        zombiesRestants = 1;
+
+
+        lootPresent = false;
+
+        typeLoot = "";
+
+
+        message =
+            "🎮 Nouvelle partie ! Clique sur le zombie pour tirer.";
+    }
+
+
+
+    void GererTouche(
+        KeyboardEventArgs e
+    )
+    {
+        if (
+            e.Key.Equals(
+                "r",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            Recharger();
+        }
+
+
+        if (
+            e.Key.Equals(
+                "s",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            Soigner();
+        }
+    }
+}
